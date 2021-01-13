@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta http-equiv="x-ua-compatible" content="IE=edge" />
+        <meta name="referrer" content="never">
+        <meta name="referrer" content="no-referrer">
+        <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, maximum-scale=1, user-scalable=no" />
+        <title>Ticketr</title>
+        <link rel="manifest" href="manifest.webmanifest">
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://lh3.googleusercontent.com" />
+        <script src="https://js.stripe.com/v3/"></script>
+    </head>
+    <body>
+        <div id="app"></div>
+        <noscript>Unfortunately this site requires JavaScript and you currently have it disabled or are using a browser that does not support it.</noscript>
+        <script type="text/javascript" src="js/main.js"></script>
+        <script>
+            const sw = "service-worker.js"; // it is needed because parcel will not recognize this as a file and not precess in its manner
+        
+            navigator.serviceWorker
+                .register(sw)
+                .then(registration => {
+                    registration.onupdatefound = () => {
+                        const installingWorker = registration.installing;
+                        if (installingWorker == null) {
+                            return;
+                        }
+                        installingWorker.onstatechange = () => {
+                            if (installingWorker.state === "installed") {
+                                if (navigator.serviceWorker.controller) {
+                                    console.log(
+                                    "New content is available and will be used when all " +
+                                        "tabs for this page are closed. See https://bit.ly/CRA-PWA."
+                                    );
+                                    // alert("New content. Refresh to use...");
+                                    document.dispatchEvent(new CustomEvent('SWUpdated', {detail: registration}));
+                                } else {
+                                    console.log("Content is cached for offline use.");
+                                }
+                            }
+                        };
+                    };
+                })
+                .catch(error => {
+                    console.error("Error during service worker registration:", error);
+                });
+        </script>
+    </body>
+</html>

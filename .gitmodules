@@ -1,0 +1,3 @@
+[submodule "src/js/ticketr-api-sdk"]
+	path = src/js/ticketr-api-sdk
+	url = https://github.com/tomfairey/Ticketr-API-SDK

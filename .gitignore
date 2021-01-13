@@ -102,3 +102,15 @@ dist
 
 # TernJS port file
 .tern-port
+
+# Build directory
+build
+
+# Audio files
+src/audio
+
+# Audio files
+src/animation/lottie
+
+# Font files
+src/fonts

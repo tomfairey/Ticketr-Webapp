@@ -1,0 +1,24 @@
+{
+    "name": "Ticketr - Buy Tickets and Track Vehicles",
+    "short_name": "Ticketr",
+    "icons": [
+        {
+            "src": "img/logo/app/ticketr-maskable-731.png",
+            "sizes": "731x731",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "img/logo/app/ticketr-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        }
+    ],
+    "start_url": "./",
+    "scope": "./",
+    "display": "standalone",
+    "theme_color": "#AEA0F2",
+    "background_color": "#AEA0F2",
+    "orientation": "portrait-primary"
+}
