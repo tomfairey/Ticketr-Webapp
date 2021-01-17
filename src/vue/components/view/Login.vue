@@ -1,7 +1,9 @@
 <template>
     <section class="login-container">
-        <div class="login-content">
+        <div class="logo-content">
             <Logo></Logo>
+        </div>
+        <div class="login-content">
             <v-alert v-if="errorMessage" type="error">{{ errorMessage }}</v-alert>
             <v-alert v-if="firstName" type="error">Welcome back, {{ firstName }}!</v-alert>
             <div class="login-items-container" v-if="formVisibile">
@@ -35,6 +37,8 @@
                     </div>
                 </v-form>
             </div>
+        </div>
+        <div class="profile-content">
             <div class="profile-items-container" v-if="profileSelectionVisibile">
                 <div class="headings">
                     <div class="heading">Ticketr</div>
@@ -148,34 +152,34 @@
 <style scoped>
     .login-container {
         display: flex;
+        flex-direction: column;
         justify-content: center;
         align-items: center;
         background-color: var(--color-accent);
         width: 100%;
         height: 100%;
     }
-    .login-content {
-        /* background-color: #FFFFFF;
-        padding: 30px;
-        border-radius: 8px;
-        -webkit-box-shadow: 0 10px 6px -6px #777;
-        -moz-box-shadow: 0 10px 6px -6px #777;
-        box-shadow: 0 10px 6px -6px #777; */
-        font-family: var(--primary-font);
+    .logo-content {
+        display: flex;
+        position: relative;
+        flex-grow: 1;
+        min-width: 100%;
+        justify-content: center;
+        align-items: center;
     }
     .login-content {
         display: flex;
+        position: relative;
         flex-direction: column;
+        flex-shrink: 1;
+        min-width: 100%;
+        font-family: var(--primary-font);
     }
     .login-items-container {
         display: flex;
+        position: relative;
         flex-direction: column;
         padding: 34px 24px;
-        margin: auto 0 0 0;
-        position: absolute;
-        right: 0;
-        bottom: 0;
-        left: 0;
         justify-self: flex-end;
         background-color: #FFFFFF;
         border-radius: 54% 46% 0 0 / 8% 12% 0 0;

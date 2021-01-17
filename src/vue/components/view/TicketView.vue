@@ -1,5 +1,5 @@
 <template>
-    <section class="ticket-view-container">
+    <section class="ticket-view-container" :key="key">
         <section class="ticket-view-navigation-container">
             <div class="ticket-view-navigation-content">
                 <div class="ticket-view-navigation-item" @click="$router.go(-1)">
@@ -7,72 +7,81 @@
                 </div>
             </div>
         </section>
-        <section class="ticket-view" v-if="!!ticket">
+        <section class="ticket-view" v-if="!!ticketClass">
             <section class="ticket-container">
                 <div class="ticket-header-container">
                     <div class="ticket-header-background">
-                        <ResourceRenderer v-if="!ticket.activated || ticket.expiry < Date.now()" :resource="ticket.ticket.retailingOperator.defaultImage"></ResourceRenderer>
-                        <div class="ticket-header-mask" v-if="ticket.activated && ticket.expiry >= Date.now()">{{ `${ticket.ticket.name} `.repeat(ticket.ticket.name.split('').length * 23) }}</div>
-                        <div class="ticket-header-text" :class="{'active': ticket.activated && ticket.expiry >= Date.now()}">{{ ticket.ticket.name }}</div>
+                        <ResourceRenderer v-if="!ticketClass.activated || expiry < Date.now()" :resource="ticketClass.ticket.retailingOperator.defaultImage"></ResourceRenderer>
+                        <div class="ticket-header-mask" v-if="ticketClass.activated && expiry >= Date.now()">{{ `${ticketClass.ticket.name} `.repeat(ticketClass.ticket.name.split('').length * 23) }}</div>
+                        <div class="ticket-header-text" :class="{'active': ticketClass.activated && expiry >= Date.now()}">{{ ticketClass.ticket.name }}</div>
                     </div>
-                    <div class="ticket-header-content" :class="{'active': ticket.activated && ticket.expiry >= Date.now()}">
-                        <div class="ticket-header-text">{{ ticket.ticket.name }}</div>
+                    <div class="ticket-header-content" :class="{'active': ticketClass.activated && expiry >= Date.now()}">
+                        <div class="ticket-header-text">{{ ticketClass.ticket.name }}</div>
                     </div>
                 </div>
                 <div class="ticket-body-container">
                     <!-- FOR ACTIVATED TICKETS THAT HAVE NOT YET EXPIRED - SHOW A LIVE COUNTDOWN TO THE EXPIRY DATE -->
-                    <div class="ticket-body-content" v-if="ticket.activated && ticket.expiry >= Date.now()">
-                        <QRCode :value="generateTYP01QR(ticket)"></QRCode>
+                    <div class="ticket-body-content" v-if="ticketClass.activated && expiry >= Date.now()">
+                        <QRCode :value="generateTYP01QR({ticketClass, session})"></QRCode>
                         <div class="ticket-body-title">Expires</div>
                         <div class="ticket-body-text">{{ generateCountdownString(this.countdown) }}</div>
                     </div>
                     <!-- END -->
                     <!-- FOR TICKETS THAT ARE NOT ACTIVATED OR HAVE EXPIRED -->
-                    <div class="ticket-body-content" v-if="!ticket.activated || ticket.expiry < Date.now()">
+                    <div class="ticket-body-content" v-if="!ticketClass.activated || expiry < Date.now()">
                         <div class="ticket-body-title">
                             <!-- USE THE CORRECT TENSE FOR WHETHER TICKET HAS EXPIRED OR WILL EXPIRE -->
-                            Expire{{ ticket.expiry >= Date.now() ? 's' : 'd' }}
+                            Expire{{ expiry >= Date.now() ? 's' : 'd' }}
                             <!-- END -->
                         </div>
-                        <div class="ticket-body-text">{{ generateTimeString(ticket.expiry) }}</div>
+                        <div class="ticket-body-text">{{ generateTimeString(expiry) }}</div>
                     </div>
                     <!-- END -->
                     <!-- FOR ALL TICKETS -->
                     <div class="ticket-body-content">
                         <div class="ticket-body-title">Purchased</div>
-                        <div class="ticket-body-text">{{ generateTimeString(ticket.created) }}</div>
+                        <div class="ticket-body-text">{{ generateTimeString(ticketClass.created) }}</div>
                     </div>
                     <div class="ticket-body-content">
-                        <div class="ticket-body-uid" v-ripple>{{ compressUUID(ticket.uuid) }}</div>
+                        <div class="ticket-body-uid" v-ripple>{{ compressUUID(ticketClass.uuid) }}</div>
                     </div>
                     <!-- END -->
                 </div>
             </section>
-            <section class="ticket-container" v-if="!!ticket.ticket.description">
+            <section class="ticket-container" v-if="!!ticketClass.ticket.description">
                 <div class="ticket-body-container">
                     <div class="ticket-body-content ticket-terms-content">
-                        <div class="ticket-terms-text">{{ ticket.ticket.description }}</div>
+                        <div class="ticket-terms-text">{{ ticketClass.ticket.description }}</div>
                     </div>
                 </div>
             </section>
-            <section class="ticket-container" v-if="!!ticket.ticket.terms">
+            <section class="ticket-container" v-if="!!ticketClass.ticket.terms">
                 <div class="ticket-body-container">
                     <div class="ticket-body-content ticket-terms-content">
                         <div class="ticket-terms-title">Terms &amp; Conditions:</div>
-                        <div class="ticket-terms-text">{{ ticket.ticket.terms }}</div>
+                        <div class="ticket-terms-text">{{ ticketClass.ticket.terms }}</div>
                     </div>
                 </div>
             </section>
-            <section class="button-container" v-if="!ticket.activated && ticket.expiry > Date.now()">
+            <section class="button-container" v-if="!ticketClass.activated && expiry > Date.now()">
                 <div class="button-content">
-                    <v-btn block color="var(--color-accent)">Activate</v-btn>
+                    <v-btn block color="var(--color-accent)" @click="toggleActivationModal(true)">Activate</v-btn>
                 </div>
             </section>
+        </section>
+        <section class="activation-modal-container" :class="{'active': activationModal}">
+            <Modal v-if="activationModal" heading="Activate ticket?" falsey="No thanks" truthy="Yes please!" @falsey="toggleActivationModal(false)" @truthy="activateTicket() && toggleActivationModal(false)">
+                If you activate this ticket now it will be valid <b>{{ calculatedExpiry(ticketClass) }}</b>.
+                <br /><br />
+
+                Are you sure you want to activate now?
+            </Modal>
         </section>
     </section>
 </template>
 
 <script>
+    import Modal from './Modal.vue';
     import ResourceRenderer from '../resources/ResourceRenderer.vue';
     import QRCode from '../validation/QRCode.vue';
 
@@ -83,14 +92,18 @@
     export default {
         name: "TicketView",
         components: {
+            'Modal': Modal,
             'ResourceRenderer': ResourceRenderer,
             'QRCode': QRCode
         },
         props: [
-            'ticket'
+            'ticket',
+            'uuid'
         ],
         data() {
             return {
+                key: 0,
+                ticketClass: null,
                 countdownInterval: null,
                 countdown: null,
                 session: {
@@ -98,13 +111,23 @@
                     otpKey: 'IFCUEOBTIM3DGOJYIVCTKMJYII4UCQZVG4YTMRJYIIZTONJZINBUMOBVGJBEEM2CGI2EIMSCGNDDON2EGAYDAQZVGE2TKOCEGIZTMRI=', // BASE32!
                     hashKey: 'E4EDB5BCC36E3BC2D3FC98249C53112E7D98FA419D8607F747898051A06E21D2-0C2FC5A0DCB0FBFC1717D9AF91F676A42FF90DF13023AA5A8E39ACC447F8808F'
                 },
-                qrCode: null
+                qrCode: null,
+                activationModal: false
             }
         },
         computed: {
-            
+            expiry: function() {
+                return this.ticketClass.expiry;
+            },
+            originHash: function() {
+                return this.ticketClass.hashes.origin;
+            }
         },
         methods: {
+            increaseKey: function() {
+                this.key++;
+                return this.key;
+            },
             getDateNth: function(d) {
                 if (d > 3 && d < 21) return 'th';
                 switch (d % 10) {
@@ -175,18 +198,18 @@
 
                 return string;
             },
-            generateTYP01QR: function({ticket, session}) {
+            generateTYP01QR: function({ticketClass, session}) {
                 let timestamp = Math.floor(Date.now() / 1000);
                 let operatorsString = '';
                 let locationsString = '';
                 let concessionaryString = '';
-                let totp = jsotp.TOTP(this.session['otpKey']);
+                let totp = jsotp.TOTP(session['otpKey']);
 
-                for(let operator of this.ticket.ticket.operators) {
+                for(let operator of ticketClass.ticket.operators) {
                     operatorsString += `${operatorsString !== '' ? `,`: ``}${operator.noc}`;
                 }
-                for(let locationType in this.ticket.ticket.locations) {
-                    let locations = this.ticket.ticket.locations[locationType];
+                for(let locationType in ticketClass.ticket.locations) {
+                    let locations = ticketClass.ticket.locations[locationType];
                     for(let location of locations) {
                         let types = {
                             "regions": "r",
@@ -206,40 +229,135 @@
                     TICKETR-TYP01`;
 
                 let qrPayload = 
-                   `${this.ticket.uuid}|
-                    ${btoa(this.ticket.ticket.name)}|
+                   `${ticketClass.uuid}|
+                    ${btoa(ticketClass.ticket.name)}|
                     ${operatorsString ? btoa(operatorsString) : ''}|
                     ${locationsString ? btoa(locationsString) : ''}|
                     ${concessionaryString ? btoa(concessionaryString) : ''}|
-                    ${Math.floor(this.ticket.created / 1000)}|
-                    ${this.ticket.activated ? Math.floor(this.ticket.modified / 1000) : 0}|
-                    ${Math.floor(this.ticket.expiry / 1000)}
+                    ${Math.floor(ticketClass.created / 1000)}|
+                    ${ticketClass.activated ? Math.floor(ticketClass.modified / 1000) : 0}|
+                    ${Math.floor(ticketClass.expiry / 1000)}
                 `.replace(/ {4}|[\t\n\r]/gm,'');
 
                 let qrHashes =
-                   `${this.ticket.hashes.origin}|
-                    ${md5(sha256.hmac(`${this.ticket.hashes.online}`, `${qrPayload}|${timestamp}`))}|
-                    ${md5(sha256.hmac(`${this.ticket.hashes.offline}`, `${qrPayload}|${timestamp}`))}|`;
+                   `${ticketClass.hashes.origin}|
+                    ${md5(sha256.hmac(`${ticketClass.hashes.online}`, `${qrPayload}|${timestamp}`))}|
+                    ${md5(sha256.hmac(`${ticketClass.hashes.offline}`, `${qrPayload}|${timestamp}`))}|`;
 
                 let qrCode = `${qrPayload}|${qrHashes}|${timestamp}`.replace(/ {4}|[\t\n\r]/gm,'');
 
-                let qrSignature = `${this.session.uuid}|
+                let qrSignature = `${session.uuid}|
                     ${totp.now()}|
-                    ${md5(sha256.hmac(this.session.hashKey, qrCode))}`;
+                    ${md5(sha256.hmac(session.hashKey, qrCode))}`;
 
                 qrCode = `${qrHeader}|${qrCode}|${qrSignature}`;
 
                 qrCode = qrCode.replace(/ {4}|[\t\n\r]/gm,'');
 
                 return qrCode;
+            },
+            toggleActivationModal: function(bool = !this.activationModal) {
+                this.activationModal = bool;
+            },
+            generateActivationExpiryString(countdown) {
+                let year = 60 * 60 * 24 * 365;
+                let month = 60 * 60 * 24 * 30;
+                let day = 60 * 60 * 24;
+                let hour = 60 * 60;
+                let minute = 60;
+
+                let string = '';
+
+                let years = Math.floor(countdown / year);
+                if(years > 0) {
+                    string += `${years} year${years != 1 ? 's' : ''} `;
+                    countdown -= year * years;
+                }
+
+                let months = Math.floor(countdown / month);
+                if(months > 0) {
+                    string += `${months} month${months != 1 ? 's' : ''} `;
+                    countdown -= month * months;
+                }
+
+                let hours = Math.floor(countdown / hour);
+
+                let days = Math.floor(countdown / day);
+
+                if(hours >= 25) {
+                    if(days > 0) {
+                        string += `${days} day${days != 1 ? 's' : ''} `;
+                        countdown -= day * days;
+                    }
+                }
+
+                hours = Math.floor(countdown / hour);
+                if(hours > 0) {
+                    string += `${hours} hour${hours != 1 ? 's' : ''} `;
+                    countdown -= hour * hours;
+                }
+
+                let minutes = Math.floor(countdown / minute);
+                if(minutes > 0) {
+                    string += `${minutes} minute${minutes != 1 ? 's' : ''} `;
+                    countdown -= minute * minutes;
+                }
+
+                let seconds = Math.floor(countdown);
+                if(seconds > 0) {
+                    string += `${seconds} second${seconds != 1 ? 's' : ''} `;
+                    countdown -= seconds;
+                }
+
+                return string;
+            },
+            calculatedExpiry: function(ticketClass) {
+                let string = ``;
+
+                switch(ticketClass.ticket.validityPeriodType.toString().toLowerCase()) {
+                    case "preset":
+                        string += `until `;
+                        let date = new Date(Date.now() + (ticketClass.ticket.validityPeriod * 1000));
+                        date.setHours(0, 0, 0, 0);
+                        date = new Date(date.valueOf() + (ticketClass.ticket.expiryDayPeriod * 1000));
+                        string += `${this.generateTimeString(date)}`;
+                        break;
+                    case "full":
+                        string += `for `;
+                        string += `${this.generateActivationExpiryString(ticketClass.ticket.validityPeriod)}`;
+                        string += `from now`;
+                        break;
+                    default:
+                        throw new Error("Unknown validity period type");
+                }
+
+                return string;
+            },
+            activateTicket: async function() {
+                await this.ticketClass.activate();
+                this.increaseKey();
+                this.$emit("refreshTickets");
             }
         },
-        mounted() {
-            this.countdown = this.ticket.expiry.valueOf() - Date.now();
-            this.countdownString = this.generateCountdownString(this.countdown);
+        beforeMount: async function() {
+            if(this.ticket && this.ticket.constructor.name == "Promise") {
+                this.ticketClass = await this.ticket;
+            }
 
+            if(!this.ticket || this.ticket.constructor.name !== "TicketrTicketrEntitlement") {
+                if(this.$route.params.uuid) {
+                    this.ticketClass = await this.$store.getters.getTicket(this.$route.params.uuid);
+                }
+            }
+
+            if(!this.ticketClass) throw new Error("Failed to fetch ticket with uuid")
+
+            this.countdown = this.ticketClass.expiry.valueOf() - Date.now();
+            this.countdownString = this.generateCountdownString(this.countdown);
+        },
+        mounted: async function() {
             this.countdownInterval = setInterval(() => {
-                this.countdown = this.ticket.expiry.valueOf() - Date.now();
+                this.countdown = this.ticketClass.expiry.valueOf() - Date.now();
                 this.countdownString = this.generateCountdownString(this.countdown);
                 if(this.countdown <= 0) {
                     clearInterval(this.countdownInterval);
@@ -473,5 +591,24 @@
         display: flex;
         position: relative;
         flex-direction: column;
+    }
+
+    .ticket-view-container .activation-modal-container {
+        display: flex;
+        position: absolute;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        background-color: rgba(0, 0, 0, 0);
+        pointer-events: none;
+        transition: all 0.2s ease-in-out;
+    }
+    .ticket-view-container .activation-modal-container.active {
+        background-color: rgba(0, 0, 0, 0.6);
+        pointer-events: all;
     }
 </style>

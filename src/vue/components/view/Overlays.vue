@@ -1,5 +1,5 @@
 <template>
-    <section class="overlays-container">
+    <section class="overlays-container" :class="{'active': active}">
         <section class="overlays-content">
             <slot></slot>
         </section>
@@ -8,7 +8,10 @@
 
 <script>
     export default {
-        name: "Overlays"
+        name: "Overlays",
+        props: [
+            'active'
+        ]
     }
 </script>
 
@@ -20,7 +23,13 @@
         width: 100%;
         height: 100%;
         z-index: 5;
+        background-color: rgba(0, 0, 0, 0);
+        pointer-events: none;
+        transition: all ease-in-out 0.4s;
+    }
+    .overlays-container.active {
         background-color: rgba(0, 0, 0, 0.6);
+        pointer-events: all;
     }
     .overlays-content {
         display: flex;

@@ -3,42 +3,46 @@
         <section class="app-scaffold" v-if="isReady">
             <nav>
                 <Navigation>
-                    <NavigationItem v-for="(route, routeIndex) in $store.state.navigation.mainRoutes" :key="routeIndex" :route="route"></NavigationItem>
+                    <NavigationItem :route="{path: '/', name: 'Home'}"></NavigationItem>
+                    <NavigationItem :route="{path: '/tickets', name: 'Tickets'}"></NavigationItem>
                 </Navigation>
             </nav>
             <main>
                 <router-view @toggleLocationPermissionModal="toggleLocationPermissionModal" @displayTicketView="displayTicketView"></router-view>
             </main>
+            <Overlays v-if="isReady" :active="overlaysActive">
+                <transition name="slide-fade">
+                    <router-view name="overlay" @refreshTickets="refreshTickets"></router-view>
+                </transition>
+                <Store v-if="overlays.store"></Store>
+                <Basket v-if="overlays.basket"></Basket>
+                <!-- <TicketView v-if="!!overlays.ticketView" :ticket="overlays.ticketView"></TicketView> -->
+                <Modal v-if="overlays.locationPermission" heading="Location Permission" falsey="No thanks" truthy="Yes please!" @falsey="falseyLocationPermissionModal" @truthy="truthyLocationPermissionModal">
+                    <div style="margin: 0 0 8px;">
+                        <Lottie :width="150" :height="140" :options="{ animationData: locationAnimation }"></Lottie>
+                    </div>
+
+                    When you provide us your location we can provide <b>you</b> cool things like stop and live vehicle tracking near you!<br /><br />
+
+                    So, what do you say?<br />
+                    Do you grant us permission to access your location?
+                </Modal>
+                <Modal v-if="overlays.update" heading="Update Available" falsey="Later" truthy="Reload Now" @falsey="overlays.update = false" @truthy="reloadPage">
+                    <!-- <div style="margin: 0 0 8px;">
+                        <Lottie :width="150" :height="140" :options="{ animationData: locationAnimation }"></Lottie>
+                    </div> -->
+                    
+                    From time to time we update the app in order to fix any bugs and provide you a better experience.<br /><br />
+
+                    The update has already been installed but the app needs reloading...<br />
+                    Can we reload the app now?
+                </Modal>
+                <Login v-if="overlays.login" @postAuthentication="postAuthentication"></Login>
+            </Overlays>
         </section>
-        <Overlays v-if="overlaysActive">
-            <Store v-if="overlays.store"></Store>
-            <Basket v-if="overlays.basket"></Basket>
-            <TicketView v-if="!!overlays.ticketView" :ticket="overlays.ticketView"></TicketView>
-            <Modal v-if="overlays.locationPermission" heading="Location Permission" falsey="No thanks" truthy="Yes please!" @falsey="falseyLocationPermissionModal" @truthy="truthyLocationPermissionModal">
-                <div style="margin: 0 0 8px;">
-                    <Lottie :width="150" :height="140" :options="{ animationData: locationAnimation }"></Lottie>
-                </div>
-
-                When you provide us your location we can provide <b>you</b> cool things like stop and live vehicle tracking near you!<br /><br />
-
-                So, what do you say?<br />
-                Do you grant us permission to access your location?
-            </Modal>
-            <Modal v-if="overlays.update" heading="Update Available" falsey="Later" truthy="Reload Now" @falsey="overlays.update = false" @truthy="reloadPage">
-                <!-- <div style="margin: 0 0 8px;">
-                    <Lottie :width="150" :height="140" :options="{ animationData: locationAnimation }"></Lottie>
-                </div> -->
-                
-                From time to time we update the app in order to fix any bugs and provide you a better experience.<br /><br />
-
-                The update has already been installed but the app needs reloading...<br />
-                Can we reload the app now?
-            </Modal>
-            <Login v-if="overlays.login" @postAuthentication="postAuthentication"></Login>
-            <Splash v-if="overlays.splash">
-                <Logo>Ticketr</Logo>
-            </Splash>
-        </Overlays>
+        <Splash v-if="overlays.splash">
+            <Logo>Ticketr</Logo>
+        </Splash>
     </div>
 </template>
 
@@ -93,8 +97,10 @@
                 for(let overlay in this.overlays) {
                     overlay = this.overlays[overlay];
 
-                    response = !!overlay ? !!overlay : response;
+                    // response = !!overlay ? !!overlay : response;
+                    if(!!overlay) response = !!overlay;
                 }
+                if(this.$route.meta.hasOverlay) response = true;
                 return response;
             },
             contentOverlaysActive: function() {
@@ -143,7 +149,7 @@
                     if(this.$store.state.ticketrApi.hasToken) {
                         let user;
                         try {
-                            this.postAuthentication(await this.$store.state.ticketrApi.refreshAuthentication());
+                            await this.postAuthentication(await this.$store.state.ticketrApi.refreshAuthentication());
                         } catch(e) {
                             throw new Error("AUTH_FAILURE");
                         }
@@ -152,6 +158,7 @@
                     }
                 } catch(e) {
                     this.overlays.login = true;
+                    this.isReady = true;
                 }
 
                 if(navigator.permissions) {
@@ -193,23 +200,17 @@
                 } catch(e) {
                     console.warn(e);
                 }
+            },
+            refreshTickets: function() {
+                this.$store.state.ticketrApi.getProfile().then((profile) => {
+                    this.$store.commit("setProfile", profile);
+                });
             }
         },
         watch: {
             $route (to, from) {
-                if(to.name === "Ticket" && to.params.hasOwnProperty('uuid')) {
-                    this.displayTicketView(to.params.uuid);
-                } else if(to.name === "Basket") {
-                    this.displayBasket();
-                } else if(to.name === "Store") {
-                    this.displayStore();
-                } else {
-                    if(!!document.fullscreenElement) {
-                        document.exitFullscreen();
-                    }
-                    this.overlays.store = false;
-                    this.overlays.basket = false;
-                    this.overlays.ticketView = false;
+                if(!!document.fullscreenElement) {
+                    document.exitFullscreen();
                 }
             }
         },
@@ -262,5 +263,22 @@
         bottom: 0;
         left: 0;
         z-index: 1;
+    }
+
+    /* Transitions */
+    .slide-fade-enter-active {
+        transition: transform 0.2s ease-in-out;
+    }
+    .slide-fade-leave-active {
+        transition: transform 0.2s ease-in-out;
+    }
+    .slide-fade-enter {
+        transform: translateX(100%);
+    }
+    .slide-fade-enter-to {
+        transform: translateX(0);
+    }
+    .slide-fade-leave-to {
+        transform: translateX(100%);
     }
 </style>

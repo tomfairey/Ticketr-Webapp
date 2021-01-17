@@ -24,6 +24,10 @@ import App from '../vue/App.vue';
 import Home from '../vue/pages/Home.vue';
 import Tickets from '../vue/pages/Tickets.vue';
 
+import Basket from '../vue/components/view/Basket.vue';
+import Store from '../vue/components/view/Store.vue';
+import TicketView from '../vue/components/view/TicketView.vue';
+
 //      // Old-caches clean-up code
 //
 // (async () => {
@@ -53,21 +57,40 @@ import Tickets from '../vue/pages/Tickets.vue';
         {
             name: "Tickets",
             path: "/tickets",
-            component: Tickets,
-            children: [
-                {
-                    name: "Basket",
-                    path: "basket"
-                },
-                {
-                    name: "Store",
-                    path: "store"
-                },
-                {
-                    name: "Ticket",
-                    path: ":uuid"
-                }
-            ]
+            component: Tickets
+        },
+        {
+            name: "Basket",
+            path: "/tickets/basket",
+            meta: {
+                hasOverlay: true
+            },
+            components: {
+                default: Tickets,
+                overlay: Basket
+            }
+        },
+        {
+            name: "Store",
+            path: "/tickets/store",
+            meta: {
+                hasOverlay: true
+            },
+            components: {
+                default: Tickets,
+                overlay: Store
+            }
+        },
+        {
+            name: "Ticket",
+            path: "/tickets/:uuid",
+            meta: {
+                hasOverlay: true
+            },
+            components: {
+                default: Tickets,
+                overlay: TicketView
+            }
         }
     ];
 
@@ -150,7 +173,10 @@ import Tickets from '../vue/pages/Tickets.vue';
         }
     });
 
-    const router = new VueRouter({routes});
+    const router = new VueRouter({
+        mode: 'history',
+        routes
+    });
 
     const opts = {};
     const vuetify = new Vuetify(opts);
