@@ -242,7 +242,7 @@
                 let qrHashes =
                    `${ticketClass.hashes.origin}|
                     ${md5(sha256.hmac(`${ticketClass.hashes.online}`, `${qrPayload}|${timestamp}`))}|
-                    ${md5(sha256.hmac(`${ticketClass.hashes.offline}`, `${qrPayload}|${timestamp}`))}|`;
+                    ${md5(sha256.hmac(`${ticketClass.hashes.offline}`, `${qrPayload}|${timestamp}`))}`;
 
                 let qrCode = `${qrPayload}|${qrHashes}|${timestamp}`.replace(/ {4}|[\t\n\r]/gm,'');
 
