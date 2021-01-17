@@ -5,33 +5,35 @@
             <v-alert v-if="errorMessage" type="error">{{ errorMessage }}</v-alert>
             <v-alert v-if="firstName" type="error">Welcome back, {{ firstName }}!</v-alert>
             <div class="login-items-container" v-if="formVisibile">
-                <div class="login-item-container">
-                    <div class="login-item">
-                        <v-text-field v-model="formData.username" label="Username" placeholder="JohnDoe123"></v-text-field>
+                <v-form @submit.prevent="attemptAuthentication">
+                    <div class="login-item-container">
+                        <div class="login-item">
+                            <v-text-field v-model="formData.username" autocomplete="username" label="Username" placeholder="JohnDoe123"></v-text-field>
+                        </div>
                     </div>
-                </div>
-                <div class="login-item-container">
-                    <div class="login-item">
-                        <v-text-field v-model="formData.password" type="password" label="Password"></v-text-field>
+                    <div class="login-item-container">
+                        <div class="login-item">
+                            <v-text-field v-model="formData.password" autocomplete="password" type="password" label="Password"></v-text-field>
+                        </div>
                     </div>
-                </div>
-                <div class="login-item-container">
-                    <div class="login-item">
-                        <v-btn :disabled="formDisabled" block color="var(--color-accent)" @click="attemptAuthentication">Login</v-btn>
+                    <div class="login-item-container">
+                        <div class="login-item">
+                            <v-btn :disabled="formDisabled" block color="var(--color-accent)" type="submit">Login</v-btn>
+                        </div>
                     </div>
-                </div>
-                <div class="login-item-container">
-                    <div class="login-item">
-                        <v-btn :disabled="formDisabled" color="#FFFFFF">
-                            <v-icon>mdi-google</v-icon>
-                        </v-btn>
+                    <div class="login-item-container">
+                        <div class="login-item">
+                            <v-btn :disabled="formDisabled" color="#FFFFFF">
+                                <v-icon>mdi-google</v-icon>
+                            </v-btn>
+                        </div>
+                        <div class="login-item">
+                            <v-btn :disabled="formDisabled" color="#FFFFFF">
+                                <v-icon>mdi-twitter</v-icon>
+                            </v-btn>
+                        </div>
                     </div>
-                    <div class="login-item">
-                        <v-btn :disabled="formDisabled" color="#FFFFFF">
-                            <v-icon>mdi-twitter</v-icon>
-                        </v-btn>
-                    </div>
-                </div>
+                </v-form>
             </div>
             <div class="profile-items-container" v-if="profileSelectionVisibile">
                 <div class="headings">

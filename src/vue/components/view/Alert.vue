@@ -1,5 +1,5 @@
 <template>
-    <section class="alert-container" @click="playMusic">
+    <section class="alert-container" @click="click">
         <div class="alert-contents" :class="{'start-padding': !this.$slots['icon-start'] && !!this.$slots.default, 'end-padding': !this.$slots['icon-end'] && !!this.$slots.default}">
             <div class="alert-content-container icon start" v-if="!!this.$slots['icon-start']">
                 <div class="alert-content">
@@ -25,141 +25,16 @@
 </template>
 
 <script>
-    import {Howl, Howler} from 'howler';
-
     export default {
         name: "Alert",
         data() {
             return {
-                audio: null,
-                source: null,
-                sources: null,
-                hasBeenPlayed: false
+
             }
         },
         methods: {
-            playMusic: function() {
+            click: function() {
                 this.$emit("click");
-
-                if (process.env.NODE_ENV === 'development') {
-                    if(!this.hasBeenPlayed) {
-                        this.hasBeenPlayed = true;
-                        
-                        this.audio.play("mainRegion");
-                    
-                        this.audio.once("end", () => {
-                            this.audio.play("loopRegion");
-                        });
-                    } else if(this.audio.playing()) {
-                        this.audio.pause();
-                    } else {
-                        this.audio.play();
-                    }
-                }
-            }
-        },
-        mounted() {
-            if (process.env.NODE_ENV === 'development') {
-                this.sources = {
-                    "bgm000": {
-                        src: require("../../../audio/bgm000.wav"),
-                        start: 0,
-                        end: 0,
-                        name: "Unknown"
-                    },
-                    "bgm001": {
-                        src: require("../../../audio/bgm001.wav"),
-                        start: 2181,
-                        end: 56727,
-                        name: "Gumshoe"
-                    },
-                    "bgm002": {
-                        src: require("../../../audio/bgm002.wav"),
-                        start: 8000,
-                        end: 46399,
-                        name: "Cornered"
-                    },
-                    "bgm003": {
-                        src: require("../../../audio/bgm003.wav"),
-                        start: 1599,
-                        end: 39999,
-                        name: "Cornered Variation"
-                    },
-                    "bgm004": {
-                        src: require("../../../audio/bgm004.wav"),
-                        start: 25999,
-                        end: 49999,
-                        name: "Objection"
-                    },
-                    "bgm005": {
-                        src: require("../../../audio/bgm005.wav"),
-                        start: 2181,
-                        end: 71999,
-                        name: "Trick"
-                    },
-                    "bgm006": {
-                        src: require("../../../audio/bgm006.wav"),
-                        start: 2307,
-                        end: 76153,
-                        name: "Maya"
-                    },
-                    "bgm007": {
-                        src: require("../../../audio/bgm007.wav"),
-                        start: 0,
-                        end: 0,
-                        name: "Unknown"
-                    },
-                    "bgm008": {
-                        src: require("../../../audio/bgm008.wav"),
-                        start: 4800,
-                        end: 38399,
-                        name: "Defendant Lobby"
-                    },
-                    "bgm010": {
-                        src: require("../../../audio/bgm010.wav"),
-                        start: 1904,
-                        end: 47619,
-                        name: "Moderato 2001"
-                    },
-                    "bgm011": {
-                        src: require("../../../audio/bgm011.wav"),
-                        start: 1791,
-                        end: 59104,
-                        name: "Allegro 2001"
-                    },
-                    "bgm012": {
-                        src: require("../../../audio/bgm012.wav"),
-                        start: 6000,
-                        end: 57999,
-                        name: "Search Core"
-                    },
-                    "bgm013": {
-                        src: require("../../../audio/bgm013.wav"),
-                        start: 9599,
-                        end: 57599,
-                        name: "Trial"
-                    }
-                };
-                
-                this.source = Object.keys(this.sources)[Math.floor(Math.random() * (Object.keys(this.sources).length - 1))]
-
-                let source = this.sources[this.source];
-
-                this.audio = new Howl({
-                    src: source.src,
-                    volume: 1,
-                    loop: false,
-                    sprite: {
-                        mainRegion: [0, source.end],
-                        loopRegion: [source.start, source.end - source.start, true],
-                    }
-                });
-            }
-        },
-        beforeDestroy() {
-            if (process.env.NODE_ENV === 'development') {
-                this.audio.pause();
-                this.audio = null;
             }
         }
     }

@@ -11,7 +11,8 @@
             </main>
         </section>
         <Overlays v-if="overlaysActive">
-            <BasketView v-if="overlays.basket"></BasketView>
+            <Store v-if="overlays.store"></Store>
+            <Basket v-if="overlays.basket"></Basket>
             <TicketView v-if="!!overlays.ticketView" :ticket="overlays.ticketView"></TicketView>
             <Modal v-if="overlays.locationPermission" heading="Location Permission" falsey="No thanks" truthy="Yes please!" @falsey="falseyLocationPermissionModal" @truthy="truthyLocationPermissionModal">
                 <div style="margin: 0 0 8px;">
@@ -53,7 +54,8 @@
     import Login from './components/view/Login.vue';
     import Modal from './components/view/Modal.vue';
     import TicketView from './components/view/TicketView.vue';
-    import BasketView from './components/view/BasketView.vue';
+    import Basket from './components/view/Basket.vue';
+    import Store from './components/view/Store.vue';
 
     export default {
         name: "App",
@@ -66,7 +68,8 @@
             'Login': Login,
             'Modal': Modal,
             'TicketView': TicketView,
-            'BasketView': BasketView,
+            'Basket': Basket,
+            'Store': Store,
             'Lottie': Lottie
         },
         data() {
@@ -78,7 +81,8 @@
                     update: false,
                     locationPermission: false,
                     ticketView: false,
-                    basket: false
+                    basket: false,
+                    store: false
                 },
                 locationAnimation: locationAnimation
             }
@@ -119,6 +123,9 @@
                 await this.$store.commit("setOrders", orders);
                 if(Object.keys(baskets).length == 1) {
                     await this.$store.commit("setBasketToUse", baskets[Object.keys(baskets)[0]]);
+                } else {
+                    await this.$store.commit("setBasketToUse", await this.$store.state.ticketrApi.newBasket());
+                    await this.$store.commit("setBaskets", await this.$store.state.ticketrApi.getBaskets());
                 }
                 this.toggleLogin(false);
                 await (await this.$store.state.database).put("user", `${this.$store.state.ticketrApi.token}`, "accessToken");
@@ -164,6 +171,9 @@
             displayBasket: async function(bool = !this.overlays.basket) {
                 this.overlays.basket = bool;
             },
+            displayStore: async function(bool = !this.overlays.store) {
+                this.overlays.store = bool;
+            },
             displayTicketView: async function(uuid) {
                 this.overlays.ticketView = await this.$store.getters.getTicket(this.$route.params.uuid);
             },
@@ -191,7 +201,13 @@
                     this.displayTicketView(to.params.uuid);
                 } else if(to.name === "Basket") {
                     this.displayBasket();
+                } else if(to.name === "Store") {
+                    this.displayStore();
                 } else {
+                    if(!!document.fullscreenElement) {
+                        document.exitFullscreen();
+                    }
+                    this.overlays.store = false;
                     this.overlays.basket = false;
                     this.overlays.ticketView = false;
                 }

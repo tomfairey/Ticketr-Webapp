@@ -417,7 +417,7 @@
                 // this.vehicleLayer.clearLayers();
                 for(let vehicle in vehicles) {
                     vehicle = vehicles[vehicle];
-                    if(this.vehicleObject[vehicle['i']]) {
+                    if(this.vehicleObject[vehicle['i']] && this.mainMap.getBounds().contains(this.vehicleObject[vehicle['i']].getLatLng())) {
                         this.vehicleObject[vehicle['i']].setIcon(L.divIcon({
                             html: this.makeVehicleMarkerHTML(vehicle['r'], vehicle['h'], vehicle['c'], vehicle['t']),
                             iconSize: [42, 42], // size of the icon

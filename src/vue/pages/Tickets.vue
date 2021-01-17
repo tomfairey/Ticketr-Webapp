@@ -26,7 +26,7 @@
                         Active Tickets:
                     </div>
                     <div class="content">
-                        <TicketCard v-for="(ticket, ticketIndex) in activeTickets" ref="ticket" :key="`active:${ticketIndex}:${ticket.uuid}`" :ticket="ticket"></TicketCard>
+                        <TicketCard v-for="(ticket, ticketIndex) in activeTickets" ref="ticket" :key="`active:${ticketIndex}:${ticket.uuid}`" @click="displayTicketView(ticket)" :ticket="ticket"></TicketCard>
                     </div>
                 </div>
                 <div class="content-container" v-if="ticketsToUse.length">
@@ -34,12 +34,12 @@
                         Tickets to use:
                     </div>
                     <div class="content">
-                        <TicketCard v-for="(ticket, ticketIndex) in ticketsToUse" ref="ticket" :key="`available:${ticketIndex}:${ticket.uuid}`" :ticket="ticket"></TicketCard>
+                        <TicketCard v-for="(ticket, ticketIndex) in ticketsToUse" ref="ticket" :key="`available:${ticketIndex}:${ticket.uuid}`" @click="displayTicketView(ticket)" :ticket="ticket"></TicketCard>
                     </div>
                 </div>
                 <div class="content-container buy-tickets">
                     <div class="content">
-                        <Alert @click="$router.push('/tickets/basket')">
+                        <Alert @click="$router.push('/tickets/store')">
                             <template v-slot:icon-start>mdi-qrcode</template>
                             <template v-slot:default>Buy a ticket...</template>
                             <template v-slot:icon-end>mdi-chevron-right</template>
@@ -51,7 +51,7 @@
                         Expired Tickets:
                     </div>
                     <div class="content">
-                        <TicketCard v-for="(ticket, ticketIndex) in expiredTickets" ref="ticket" :key="`expired:${ticketIndex}:${ticket.uuid}`" :ticket="ticket"></TicketCard>
+                        <TicketCard v-for="(ticket, ticketIndex) in expiredTickets" ref="ticket" :key="`expired:${ticketIndex}:${ticket.uuid}`" @click="displayTicketView(ticket)" :ticket="ticket"></TicketCard>
                     </div>
                 </div>
             </div>
@@ -103,20 +103,14 @@
             },
             basketIconCount: function() {
                 let basketCount = 0;
-                let orderCount = 0;
 
-                let baskets = this.$store.state.baskets;
-                let orders = this.$store.state.orders;
-
-                for(let basket in baskets) {
-                    basketCount ++;
+                let basket = this.$store.state.basketToUse;
+                for(let ticket in basket.tickets) {
+                    ticket = basket.tickets[ticket];
+                    basketCount += ticket.quantity;
                 }
 
-                for(let order in orders) {
-                    orderCount ++;
-                }
-
-                return basketCount + orderCount;
+                return basketCount;
             }
         },
         methods: {
@@ -184,6 +178,10 @@
                     if (changeY > 100) this.loading();
                     if(this.$refs['ticket']) for (const card of this.$refs['ticket']) card.$el.style.transform = `rotateX(${rotation}deg)`;
                 }
+            },
+            displayTicketView: function(ticket) {
+                this.$router.push(`/tickets/${ticket.uuid}`);
+                if (process.env.NODE_ENV !== 'development') if (!window.matchMedia('(display-mode: standalone)').matches) document.documentElement.requestFullscreen();
             }
         },
         mounted() {
@@ -272,7 +270,6 @@
         font-family: var(--primary-font);
         font-weight: 700;
     }
-
     .overlays-container {
         display: flex;
         position: absolute;
@@ -293,5 +290,17 @@
         font-weight: 700;
         text-align: center;
         color: #444444;
+    }
+
+    @media only screen and (min-width: 768px) {
+        .content-container .content {
+            flex-basis: auto;
+            flex-wrap: nowrap;
+        }
+        .content-container .content .ticket-card-container {
+            display: inline-flex;
+            width: 400px;
+            margin: 10px;
+        }
     }
 </style>

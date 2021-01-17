@@ -2,7 +2,6 @@
     <div class="nav-content" :class="{'large': $route.fullPath == '/'}">
         <div class="nav-items-container">
             <slot></slot>
-            <div class="tabIndicator"></div>
             <div class="nav-item-container profile" :class="{'active': $route.fullPath == '/profile'}">
                 <router-link to="/profile">
                     <div class="nav-profile-image">
@@ -10,6 +9,7 @@
                     </div>
                 </router-link>
             </div>
+            <div class="tabIndicator"></div>
         </div>
     </div>
 </template>
@@ -41,6 +41,10 @@
     }
     .nav-item-container:nth-of-type(2).active ~ .tabIndicator {
         left: 96px;
+    }
+    .nav-item-container.profile.active ~ .tabIndicator {
+        opacity: 0;
+        left: calc(100vw - 24px);
     }
 </style>
 
@@ -111,6 +115,6 @@
         height: 3px;
         background-color: var(--color-dark-accent);
         border-radius: 8px;
-        transition: left 0.2s ease-out;
+        transition: left 0.2s ease-out, opacity 0.1s ease-out;
     }
 </style>

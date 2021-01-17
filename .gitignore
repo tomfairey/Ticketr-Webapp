@@ -109,8 +109,5 @@ build
 # Audio files
 src/audio
 
-# Audio files
+# Animation files
 src/animation/lottie
-
-# Font files
-src/fonts

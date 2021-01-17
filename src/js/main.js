@@ -60,6 +60,10 @@ import Tickets from '../vue/pages/Tickets.vue';
                     path: "basket"
                 },
                 {
+                    name: "Store",
+                    path: "store"
+                },
+                {
                     name: "Ticket",
                     path: ":uuid"
                 }
