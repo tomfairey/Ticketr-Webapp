@@ -267,18 +267,18 @@
 
     /* Transitions */
     .slide-fade-enter-active {
-        transition: transform 0.2s ease-in-out;
+        transition: transform 0.2s ease-out;
     }
     .slide-fade-leave-active {
-        transition: transform 0.2s ease-in-out;
+        transition: transform 0.15s ease-in;
     }
     .slide-fade-enter {
-        transform: translateX(100%);
+        transform: translateX(100vw);
     }
     .slide-fade-enter-to {
         transform: translateX(0);
     }
     .slide-fade-leave-to {
-        transform: translateX(100%);
+        transform: translateX(100vw);
     }
 </style>
