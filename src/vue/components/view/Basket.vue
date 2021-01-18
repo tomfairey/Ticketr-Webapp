@@ -323,7 +323,15 @@
         overflow-x: overlay;
         overflow-y: auto;
     }
+    .basket-container .basket-content .tickets-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
     .basket-container .basket-content .tickets-container .ticket-container {
+        min-width: 400px;
+        width: 400px;
+        max-width: 400px;
         padding: 0 4px;
     }
     .basket-container .basket-content .totals-container {

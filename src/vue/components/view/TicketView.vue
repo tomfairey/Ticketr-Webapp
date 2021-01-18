@@ -378,6 +378,7 @@
         top: 0;
         bottom: 0;
         margin: 0 auto;
+        min-width: min(100%, 768px);
         max-width: 768px;
         background-color: #FFFFFF;
     }
