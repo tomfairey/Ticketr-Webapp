@@ -45,6 +45,9 @@
     .layer .colour.hexcode {
         background-color: var(--layer-data);
     }
+    .layer .colour.gradient {
+        background: var(--layer-data);
+    }
     .layer .image.url {
         background-image: var(--layer-data);
         background-repeat: no-repeat;
