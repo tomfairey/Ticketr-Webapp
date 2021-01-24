@@ -52,6 +52,7 @@
         display: flex;
         position: relative;
         min-width: 240px;
+        width: max-content;
         max-width: calc(100% - 32px);
         min-height: 120px;
         margin: 16px;
