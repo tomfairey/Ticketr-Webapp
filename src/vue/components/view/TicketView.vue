@@ -22,7 +22,7 @@
                 <div class="ticket-body-container">
                     <!-- FOR ACTIVATED TICKETS THAT HAVE NOT YET EXPIRED - SHOW A LIVE COUNTDOWN TO THE EXPIRY DATE -->
                     <div class="ticket-body-content" v-if="ticketClass.activated && expiry >= Date.now()">
-                        <QRCode :value="generateTYP01QR({ticketClass, session})"></QRCode>
+                        <QRCode @click="toggleQRType" :value="qrCodeType == 0 ? generateTYP01QR({ticketClass, session}) : generateReferenceQR(ticketClass)"></QRCode>
                         <div class="ticket-body-title">Expires</div>
                         <div class="ticket-body-text">{{ generateCountdownString(this.countdown) }}</div>
                     </div>
@@ -112,7 +112,8 @@
                     hashKey: 'E4EDB5BCC36E3BC2D3FC98249C53112E7D98FA419D8607F747898051A06E21D2-0C2FC5A0DCB0FBFC1717D9AF91F676A42FF90DF13023AA5A8E39ACC447F8808F'
                 },
                 qrCode: null,
-                activationModal: false
+                activationModal: false,
+                qrCodeType: 0
             }
         },
         computed: {
@@ -256,6 +257,9 @@
 
                 return qrCode;
             },
+            generateReferenceQR(ticketClass) {
+                return `TICKETR|REF-0|${ticketClass.uuid}|${Math.floor(Date.now() / 1000)}`;
+            },
             toggleActivationModal: function(bool = !this.activationModal) {
                 this.activationModal = bool;
             },
@@ -337,6 +341,13 @@
                 await this.ticketClass.activate();
                 this.increaseKey();
                 this.$emit("refreshTickets");
+            },
+            toggleQRType() {
+                if(this.qrCodeType > 0) {
+                    this.qrCodeType = 0;
+                } else {
+                    this.qrCodeType ++;
+                }
             }
         },
         beforeMount: async function() {
