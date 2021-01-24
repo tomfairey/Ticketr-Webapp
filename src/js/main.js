@@ -136,6 +136,9 @@ import TicketView from '../vue/components/view/TicketView.vue';
             stripe: Stripe('pk_test_brDgoDDlE7DnK4GwCMPcTMau00Obl0Dk6a'),
             ticketrApi: ticketrApi,
             database: database,
+            stops: {
+
+            },
             navigation: {
                 mainRoutes: routes
             },
@@ -152,6 +155,9 @@ import TicketView from '../vue/components/view/TicketView.vue';
             // }
             getTicket: state => uuid => {
                 return state.profile.tickets.filter(r => r.uuid == uuid)[0];
+            },
+            getStop: state => atco => {
+                return state.stops[atco];
             }
         },
         mutations: {
@@ -169,6 +175,9 @@ import TicketView from '../vue/components/view/TicketView.vue';
             },
             setOrders (state, orders) {
                 state.orders = orders;
+            },
+            setStop (state, stop) {
+                state.stops[stop['atco_code']] = stop;
             }
         }
     });
