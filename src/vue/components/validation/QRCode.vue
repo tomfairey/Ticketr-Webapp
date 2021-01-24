@@ -1,6 +1,6 @@
 <template>
     <section class="qr-container">
-        <div class="qr-content" v-ripple>
+        <div class="qr-content" @click="$emit('click')" v-ripple>
             <vue-qrcode :value="this.value"></vue-qrcode>
         </div>
     </section>
