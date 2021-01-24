@@ -429,16 +429,20 @@
             showShortVehicles: async function(vehicles) {
                 for(let vehicle in vehicles) {
                     vehicle = vehicles[vehicle];
-                    if(this.vehicleObject[vehicle['i']] && this.mainMap.getBounds().contains(this.vehicleObject[vehicle['i']].getLatLng())) {
+                    if(this.vehicleObject[vehicle['i']]) {
                         this.vehicleObject[vehicle['i']].setIcon(L.divIcon({
                             html: this.makeVehicleMarkerHTML(vehicle['r'], vehicle['h'], vehicle['c'], vehicle['t']),
                             iconSize: [42, 42], // size of the icon
                             iconAnchor: [21, 21], // point of the icon which will correspond to marker's location
                             popupAnchor: [0, 0] // point from which the popup should open relative to the iconAnchor
                         }));
-                        this.vehicleObject[vehicle['i']].slideTo([vehicle['l'][1], vehicle['l'][0]], {
-                            duration: 700
-                        });
+                        if(this.mainMap.getBounds().contains(this.vehicleObject[vehicle['i']].getLatLng())) {
+                            this.vehicleObject[vehicle['i']].slideTo([vehicle['l'][1], vehicle['l'][0]], {
+                                duration: 700
+                            });
+                        } else {
+                            this.vehicleObject[vehicle['i']].setLatLng([vehicle['l'][1], vehicle['l'][0]]).update();
+                        }
                     } else {
                         this.vehicleObject[vehicle['i']] = L.marker([vehicle['l'][1], vehicle['l'][0]], {
                             icon: L.divIcon({
