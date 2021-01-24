@@ -14,8 +14,11 @@
                         </div>
                     </div>
                 </div>
-                <div class="overlay-container bus-overlay">
-                    <BusOverlay :bus="'180755'"></BusOverlay>
+                <div class="overlay-container overlay bus" :class="{'active': !!vehicleId}">
+                    <BusOverlay v-if="vehicleId" :bus="'180755'"></BusOverlay>
+                </div>
+                <div class="overlay-container overlay stop" :class="{'active': !!stopAtco}" @click="stopAtco = null">
+                    <StopOverlay v-if="stopAtco" :atco="stopAtco" @close="stopAtco = null"></StopOverlay>
                 </div>
             </div>
         </div>
@@ -34,6 +37,7 @@
     import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 
     import BusOverlay from '../components/view/BusOverlay.vue';
+    import StopOverlay from '../components/view/StopOverlay.vue';
 
     import busStopIcon from '../../img/map/markers/bus_stop_marker.svg';
     import tramStopIcon from '../../img/map/markers/tram_stop_marker.svg';
@@ -126,14 +130,17 @@
     export default {
         name: "Home",
         components: {
-            'BusOverlay': BusOverlay
+            'BusOverlay': BusOverlay,
+            'StopOverlay': StopOverlay
         },
         data() {
             return {
                 defaultMapBounds: [[ 49.82380908513249, -10.8544921875 ], [ 59.478568831926395, 2.021484375 ]],
                 mainMap: null,
                 locationControl: null,
-                stopsLayer: L.markerClusterGroup(),
+                stopsLayer: L.markerClusterGroup({
+                    disableClusteringAtZoom: 18
+                }),
                 vehicleLayer: L.layerGroup([]),
                 stopsResponseObject: {},
                 stopsObject: {},
@@ -144,7 +151,9 @@
                 refreshWaitingOn: new Set(),
                 socket: null,
                 backoff: 1000,
-                newSocket: null
+                newSocket: null,
+                vehicleId: null,
+                stopAtco: null
             }
         },
         methods: {
@@ -289,6 +298,7 @@
                 let disallowed_types = []; // ['train_station'];
                 for(let stop in stops) {
                     stop = stops[stop];
+                    this.$store.commit("setStop", stop);
                     if(!this.stopsObject.hasOwnProperty(stop['atco_code']) && !disallowed_types.includes(stop['type'])) {
                         let description = '';
                         let iconUrl = '';
@@ -322,7 +332,10 @@
                             opacity: 1
                         });
                         this.stopsObject[stop['atco_code']] = marker;
-                        marker.bindPopup(`<u><strong>${stop.name}</strong></u><br />${description}`);
+                        // marker.bindPopup(`<u><strong>${stop.name}</strong></u><br />${description}`);
+                        marker.on("click", () => {
+                            this.stopAtco = stop['atco_code'];
+                        });
                         marker.addTo(this.stopsLayer);
                     }
                 }
@@ -414,7 +427,6 @@
                 // }
             },
             showShortVehicles: async function(vehicles) {
-                // this.vehicleLayer.clearLayers();
                 for(let vehicle in vehicles) {
                     vehicle = vehicles[vehicle];
                     if(this.vehicleObject[vehicle['i']] && this.mainMap.getBounds().contains(this.vehicleObject[vehicle['i']].getLatLng())) {
@@ -460,12 +472,6 @@
                             this.vehicleLayer.removeLayer(vehicle);
                         }
                     }
-                    // if(this.vehicleLayer.hasLayer(vehicle) && (!this.mainMap.getBounds().contains(vehicle.getLatLng()) /* || vehicles.filter(v => v['i'] === vehicleFn).length === 0 */ )) {
-                    //     this.vehicleLayer.removeLayer(vehicle);
-                    //     // delete this.vehicleObject[vehicle];
-                    // } else if(!this.vehicleLayer.hasLayer(vehicle) && this.mainMap.getBounds().contains(vehicle.getLatLng())) {
-                    //     this.vehicleObject[vehicle['i']].addTo(this.vehicleLayer);
-                    // }
                 }
             },
             showVehicleInfoOverlay: function(vehicle) {
@@ -528,10 +534,14 @@
                 
                 let bounds = this.mainMap.getBounds();
                 this.socket.send(JSON.stringify([
-                    bounds.getWest() - 0.2,
-                    bounds.getSouth() - 0.2,
-                    bounds.getEast() + 0.2,
-                    bounds.getNorth() + 0.2
+                    // bounds.getWest() - 0.2,
+                    // bounds.getSouth() - 0.2,
+                    // bounds.getEast() + 0.2,
+                    // bounds.getNorth() + 0.2
+                    bounds.getWest() * 0.9995,
+                    bounds.getSouth() * 0.9995,
+                    bounds.getEast() * 1.0005,
+                    bounds.getNorth() * 1.0005
                 ]));
             },
             handleLocationRequest: async function() {
@@ -629,6 +639,9 @@
     .map > div.leaflet-pane.leaflet-map-pane > div.leaflet-pane.leaflet-marker-pane > div.leaflet-marker-icon.leaflet-control-locate-heading > svg > path {
         fill: var(--color-dark-accent) !important;
     }
+    #app[colour-scheme="dark"] .map > div.leaflet-pane.leaflet-map-pane > div.leaflet-pane.leaflet-tile-pane {
+        filter: invert(1) hue-rotate(180deg);
+    }
 </style>
 
 <style scoped>
@@ -672,8 +685,22 @@
         position: relative;
         margin: auto;
     }
-    .content-container .content .overlay-container.bus-overlay {
+    .content-container .content .overlay-container.overlay {
+        display: flex;
+        flex-direction: column;
         position: absolute;
+        justify-content: flex-end;
+        align-items: center;
+        height: calc(100% + 100px);
+        right: 0;
+        bottom: 0;
+        left: 0;
+        pointer-events: none;
+        transition: background-color 0.2s ease-out;
+    }
+    .content-container .content .overlay-container.overlay.active {
+        background-color: rgba(0, 0, 0, 0.4);
+        pointer-events: all;
     }
     .content-container .content .overlay-container.top {
         align-self: flex-start;
