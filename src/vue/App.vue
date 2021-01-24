@@ -1,5 +1,5 @@
 <template>
-    <div id="app">
+    <div id="app" :colour-scheme="isDarkMode ? 'dark' : null">
         <section class="app-scaffold" v-if="isReady">
             <nav>
                 <Navigation>
@@ -28,10 +28,6 @@
                     Do you grant us permission to access your location?
                 </Modal>
                 <Modal v-if="overlays.update" heading="Update Available" falsey="Later" truthy="Reload Now" @falsey="overlays.update = false" @truthy="reloadPage">
-                    <!-- <div style="margin: 0 0 8px;">
-                        <Lottie :width="150" :height="140" :options="{ animationData: locationAnimation }"></Lottie>
-                    </div> -->
-                    
                     From time to time we update the app in order to fix any bugs and provide you a better experience.<br /><br />
 
                     The update has already been installed but the app needs reloading...<br />
@@ -92,6 +88,13 @@
             }
         },
         computed: {
+            isDarkMode: function() {
+                let isDark = false;
+
+                isDark = this.darkMode();
+
+                return isDark;
+            },
             overlaysActive: function() {
                 let response = false;
                 for(let overlay in this.overlays) {
@@ -114,6 +117,13 @@
             }
         },
         methods: {
+            darkMode: function() {
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    return true;
+                }
+
+                return false;
+            },
             handleSWUpdated: function() {
                 this.overlays.update = true;
             },

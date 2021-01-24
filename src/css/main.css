@@ -1,8 +1,9 @@
 :root {
     --primary-font: 'HK Grotesk';
-    --color-accent: #AEA0F2;
-    --color-dark-accent: #765CF2;
-    --color-scrollbar-fill: var(var(--color-accent));
+    --ticketr-accent: #AEA0F2;
+    --ticketr-dark-accent: #765CF2;
+    --ticketr-darker-accent: #4F2FF0;
+    --color-scrollbar-fill: var(--ticketr-accent);
 }
 
 * {
@@ -23,6 +24,17 @@
 
 html {
     overflow: hidden !important;
+
+    --color-accent: var(--ticketr-accent);
+    --color-dark-accent: var(--ticketr-dark-accent);
+}
+
+#app[colour-scheme="dark"] {
+    background-color: #000000;
+    color: #FFFFFF;
+    
+    --color-accent: var(--ticketr-dark-accent);
+    --color-dark-accent: var(--ticketr-darker-accent);
 }
 
 @font-face {
