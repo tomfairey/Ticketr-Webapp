@@ -22,7 +22,7 @@
                         <Lottie :width="150" :height="140" :options="{ animationData: locationAnimation }"></Lottie>
                     </div>
 
-                    When you provide us your location we can provide <b>you</b> cool things like stop and live vehicle tracking near you!<br /><br />
+                    When you provide us your location we can provide you features like <b>departure times at stops near you</b> and <b>live vehicle tracking</b>!<br /><br />
 
                     So, what do you say?<br />
                     Do you grant us permission to access your location?
