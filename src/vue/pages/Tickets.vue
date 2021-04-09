@@ -285,6 +285,7 @@
     .overlays-container .message {
         display: flex;
         align-items: center;
+        margin: 0 20px;
         font-family: var(--primary-font);
         font-size: 18px;
         font-weight: 700;
