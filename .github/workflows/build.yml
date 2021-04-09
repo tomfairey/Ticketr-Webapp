@@ -1,5 +1,6 @@
 name: Build and Deploy
 on:
+  # Trigger action on a push
   push:
     branches:    
       # Push events only on main branch
@@ -9,6 +10,8 @@ on:
       - 'src/**'
       # Push events on service worker changes
       - 'workbox-config.js'
+  # Allow manual triggering of action
+  workflow_dispatch:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
