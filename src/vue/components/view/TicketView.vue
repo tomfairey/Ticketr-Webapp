@@ -19,7 +19,7 @@
                         <div class="ticket-header-text">{{ ticketClass.ticket.name }}</div>
                     </div>
                 </div>
-                <div class="ticket-body-container">
+                <div class="ticket-body-container" :class="{'activated': ticketClass.activated && expiry >= Date.now()}">
                     <!-- FOR ACTIVATED TICKETS THAT HAVE NOT YET EXPIRED - SHOW A LIVE COUNTDOWN TO THE EXPIRY DATE -->
                     <div class="ticket-body-content" v-if="ticketClass.activated && expiry >= Date.now()">
                         <QRCode @click="toggleQRType" :value="qrCodeType == 0 ? generateTYP01QR({ticketClass, session}) : generateReferenceQR(ticketClass)"></QRCode>
@@ -183,18 +183,18 @@
 
                 let hours = Math.floor(countdown / hour);
                 if(hours > 0) {
-                    string += `${hours} hour${hours != 1 ? 's' : ''} `;
+                    string += `${hours} h${hours != 1 ? 'rs' : 'our'} `;
                     countdown -= hour * hours;
                 }
 
                 let minutes = Math.floor(countdown / minute);
                 if(minutes > 0) {
-                    string += `${minutes} minute${minutes != 1 ? 's' : ''} `;
+                    string += `${minutes} min${minutes != 1 ? 's' : ''} `;
                     countdown -= minute * minutes;
                 }
 
                 let seconds = Math.floor(countdown);
-                string += `${seconds} second${seconds != 1 ? 's' : ''}`;
+                string += `${seconds} sec${seconds != 1 ? 's' : ''}`;
                 countdown -= seconds;
 
                 return string;
@@ -531,6 +531,52 @@
         justify-content: center;
         align-items: center;
         padding: 16px;
+        clip-path: inset(0);
+        overflow: hidden;
+    }
+    .ticket-view-container .ticket-view .ticket-container .ticket-body-container.activated::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 200px;
+        height: 200px;
+        background-color: #d80db6;
+        border-radius: 19% 81% 39% 64% / 56% 72% 28% 44%;
+        z-index: -1;
+        animation: move1 8s ease-in-out infinite alternate;
+        transform-origin: 50% 50%;
+        transform: translate(-10px, -30px);
+    }
+    .ticket-view-container .ticket-view .ticket-container .ticket-body-container.activated::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 200px;
+        height: 200px;
+        background-color: #d8680d;
+        border-radius: 60% 40% 26% 80% / 32% 43% 53% 69%;
+        z-index: -1;
+        animation: move2 8s ease-in-out infinite alternate;
+        transform-origin: 50% 50%;
+        transform: translate(75vw, -30px);
+    }
+    @keyframes move1 {
+        0%   { transform: scale(1)   translate(-10px, -30px); background-color: #d80db6; }
+        38%  { transform: scale(0.8, 1) translate(50vw, 40vh) rotate(160deg); }
+        40%  { transform: scale(0.8, 1) translate(50vw, 40vh) rotate(160deg);}
+        78%  { transform: scale(1.3) translate(-5vw, 20vh) rotate(-20deg); background-color: #d8680d;  }
+        80%  { transform: scale(1.3) translate(-5vw, 20vh) rotate(-20deg); }
+        100% { transform: scale(1)   translate(-10px, -30px); background-color: #d80d2f; }
+    }
+    @keyframes move2 {
+        0%   { transform: scale(1)   translate(75vw, -30px); background-color: #0dd868; }
+        38%  { transform: scale(0.8, 1) translate(80vw, 30vh) rotate(160deg);}
+        40%  { transform: scale(0.8, 1) translate(80vw, 30vh) rotate(160deg); z-index: -2; }
+        78%  { transform: scale(1.3) translate(0vw, 40vh) rotate(-20deg); background-color: #d8680d; }
+        80%  { transform: scale(1.3) translate(0vw, 40vh) rotate(-20deg); border-radius: 46% 54% 61% 36% / 72% 70% 34% 33%; }
+        100% { transform: scale(1)   translate(75vw, -30px); border-radius: 46% 54% 61% 36% / 72% 70% 34% 33%; background-color: #5b0dd8; }
     }
     .ticket-view-container .ticket-view .ticket-container .ticket-body-container .ticket-body-content {
         display: flex;
