@@ -129,8 +129,7 @@
                 let authAttempt;
                 try {
                     await this.$store.state.ticketrApi.setProfile(profile)
-                    authAttempt = await this.$store.state.ticketrApi.getProfile(true);
-                    this.authAttempt.profile = authAttempt;
+                    this.authAttempt.profile = profile;
                 } catch(e) {
                     console.warn(e);
                 } finally {
