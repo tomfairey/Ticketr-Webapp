@@ -108,6 +108,3 @@ build
 
 # Audio files
 src/audio
-
-# Animation files
-src/animation/lottie
