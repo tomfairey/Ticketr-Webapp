@@ -53,10 +53,16 @@
                     </Alert>
                 </div>
                 <div class="payment-container">
-                    <div class="payment-container">
+                    <div class="payment-content">
                         <div id="stripe-payment-request-button" v-if="canPaymentRequest"></div>
-                        <div id="stripe-card-element" v-if="!canPaymentRequest"></div>
-                        <v-btn v-if="!canPaymentRequest" block @click="completeCardPayment()">Complete Payment</v-btn>
+                        <Alert v-if="canPaymentRequest">
+                            <template v-slot:icon-start>mdi-apple-finder</template>
+                            <template v-slot:default>Apple Pay - not working!</template>
+                        </Alert>
+                        <div class="stripe-card-element-container">
+                            <div id="stripe-card-element"></div>
+                        </div>
+                        <v-btn block @click="completeCardPayment()">Complete Payment</v-btn>
                     </div>
                 </div>
             </div>
@@ -143,17 +149,16 @@
                 this.clientSecret = await order.getPaymentIntentClientSecret();
                 if(this.canPaymentRequest) {
                     this.paymentRequestButton.mount('#stripe-payment-request-button');
-                    paymentRequest.on('paymentmethod', this.completePaymentRequestPayment);
-                } else {
-                    this.cardElement = this.elements.create("card", {
-                        style: {
-                            base: {
-                                color: "#765CF2",
-                            }
-                        }
-                    });
-                    this.cardElement.mount("#stripe-card-element");
+                    this.paymentRequest.on('paymentmethod', this.completePaymentRequestPayment);
                 }
+                this.cardElement = this.elements.create("card", {
+                    style: {
+                        base: {
+                            
+                        }
+                    }
+                });
+                this.cardElement.mount("#stripe-card-element");
             },
             completeCardPayment: async function() {
                 let confirmResult = await this.$store.state.stripe.confirmCardPayment(this.clientSecret, {
@@ -343,5 +348,11 @@
     }
     .basket-container .basket-content .totals-container .checkout.button {
         display: flex;
+    }
+    .basket-container .order-container .order-content .payment-container .payment-content .stripe-card-element-container {
+        padding: 10px;
+        margin: 10px;
+        background-color: rgba(0,0,0,0.2);
+        border-radius: 8px;
     }
 </style>
