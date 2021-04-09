@@ -153,6 +153,7 @@
                 backoff: 1000,
                 newSocket: null,
                 socketConnected: false,
+                vehiclePointerInterval: null,
                 vehicleId: null,
                 stopAtco: null
             }
@@ -208,6 +209,23 @@
                         } catch(e) {
                             console.warn("Vehicle position fetch error", e);
                         }
+                    } else {
+                        let bounds = this.mainMap.getBounds();
+
+                        if(this.vehiclePointerInterval) clearInterval(this.vehiclePointerInterval);
+                        this.vehiclePointerInterval = null;
+
+                        await this.showVehicles(await this.fetchVehicleData([bounds.getNorth() * 1.0005, bounds.getEast() * 1.0005, bounds.getSouth() * 0.9995, bounds.getWest() * 0.9995]));
+
+                        if(!this.vehiclePointerInterval) { /* Assuming a more up-to-date movement could have added a interval */
+                            this.vehiclePointerInterval = setInterval(async () => {
+                                if(Date.now() - this.lastVehiclePointerUpdate >= 8000) {
+                                    await this.showVehicles(await this.fetchVehicleData([bounds.getNorth() * 1.0005, bounds.getEast() * 1.0005, bounds.getSouth() * 0.9995, bounds.getWest() * 0.9995]));
+                                }
+                            }, 10000);
+                        }
+
+                        this.lastVehiclePointerUpdate = Date.now();
                     }
 
                     if(centerGeohash !== this.lastGeohash) {
@@ -299,11 +317,11 @@
                     return false;
                 }
             },
-            fetchVehicleData: async function(boundsLatLng) {
+            fetchVehicleData: async function([ymax, xmax, ymin, xmin]) {
                 try{
-                    let vehiclesAPIRequest = await fetch(`https://kkh91b05a8.execute-api.eu-west-2.amazonaws.com/staging/vehicles/bustimes?ymax=${boundsLatLng.getNorthEast().lat}&xmax=${boundsLatLng.getNorthEast().lng}&ymin=${boundsLatLng.getSouthWest().lat}&xmin=${boundsLatLng.getSouthWest().lng}`);
+                    let vehiclesAPIRequest = await fetch(`https://kkh91b05a8.execute-api.eu-west-2.amazonaws.com/staging/vehicles/bustimes?ymax=${ymax}&xmax=${xmax}&ymin=${ymin}&xmin=${xmin}`);
                     let vehiclesAPIResponse = await vehiclesAPIRequest.json();
-                    return vehiclesAPIResponse.features;
+                    return vehiclesAPIResponse;
                 } catch(e) {
                     console.warn(e);
                     return false;
@@ -355,7 +373,7 @@
                     }
                 }
             },
-            makeVehicleMarkerHTML: function(route_name, heading, status, textColour = null) {
+            makeVehicleMarkerHTML: function(route_name, heading, livery, status, textColour = null) {
                 let colour;
                 switch(status) {
                     case "R":
@@ -387,59 +405,16 @@
                             break;
                     }
                 }
-                return `<div style="position: relative; display: flex; justify-content: center; align-items: center; width: 42px; height: 42px; --icon-color: ${colour};">
+                return `<div style="position: relative; display: flex; justify-content: center; align-items: center; width: 42px; height: 42px; --icon-color: ${colour}; color: #222222;">
                     ${ heading !== null ?
                         `<div style="position: absolute; width: 42px; height: 42px; transform: rotate(${heading + 45}deg); background-color: var(--icon-color); border-radius: 0 100% 100% 100%;">` :
                         `<div style="position: absolute; width: 42px; height: 42px; background-color: var(--icon-color); border-radius: 100% 100% 100% 100%;">`
                     }
                     </div>
-                    <div style="position: absolute; display: flex; justify-content: center; overflow: hidden; align-items: center; border-radius: 100%; width: 34px; height: 34px; background: ${status ? status : '#FFFFFF'}; text-align: center; line-height: 1.3; font-size: 14px; font-family: var(--primary-font); font-weight: 700; color: ${textColour ? textColour : '#222222'};">
+                    <div class="${livery ? `livery-${livery}` : ''}${livery && heading < 180 ? ' right' : ''}" style="position: absolute; display: flex; justify-content: center; overflow: hidden; align-items: center; border-radius: 100%; width: 34px; height: 34px;${status ? status : livery ? '' : ' background: #FFFFFF;'} text-align: center; line-height: 1.3; font-size: 14px; font-family: var(--primary-font); font-weight: 700;${textColour ? ` color: ${textColour};` : ''}">
                         ${route_name ? route_name : ''}
                     </div>
                 </div>`;
-            },
-            showVehicles: async function(vehicles) {
-                // this.vehicleLayer.clearLayers();
-                for(let vehicle in vehicles) {
-                    vehicle = vehicles[vehicle];
-                    if(this.vehicleObject[vehicle['properties']['vehicle']['url']]) {
-                        this.vehicleObject[vehicle['properties']['vehicle']['url']].setIcon(L.divIcon({
-                            html: this.makeVehicleMarkerHTML(vehicle['properties']['service']['line_name'], vehicle['properties']['direction'], vehicle['properties']['vehicle']['livery'], vehicle['properties']['vehicle']['text_colour']),
-                            iconSize: [42, 42], // size of the icon
-                            iconAnchor: [21, 21], // point of the icon which will correspond to marker's location
-                            popupAnchor: [0, 0] // point from which the popup should open relative to the iconAnchor
-                        }));
-                        this.vehicleObject[vehicle['properties']['vehicle']['url']].slideTo([vehicle['geometry']['coordinates'][1], vehicle['geometry']['coordinates'][0]], {
-                            duration: 700
-                        });
-                    } else {
-                        this.vehicleObject[vehicle['properties']['vehicle']['url']] = L.marker([vehicle['geometry']['coordinates'][1], vehicle['geometry']['coordinates'][0]], {
-                            icon: L.divIcon({
-                                html: this.makeVehicleMarkerHTML(vehicle['properties']['service']['line_name'], vehicle['properties']['direction'], vehicle['properties']['vehicle']['livery'], vehicle['properties']['vehicle']['text_colour']),
-                                iconSize: [42, 42], // size of the icon
-                                iconAnchor: [21, 21], // point of the icon which will correspond to marker's location
-                                popupAnchor: [0, 0] // point from which the popup should open relative to the iconAnchor
-                            }),
-                            draggable: false,
-                            opacity: 1
-                        }).bindPopup(`<u><strong>${vehicle['properties']['service']['line_name']} - ${vehicle['properties']['destination']}</strong></u><br />${vehicle['properties']['operator']}<br />${vehicle['properties']['vehicle']['name']}`)
-                        .on('click', (e) => {
-                            this.mainMap.setView(e.target.getLatLng());
-                            this.showVehicleInfoOverlay(vehicle);
-                        });
-                    }
-                    if(!this.vehicleLayer.hasLayer(vehicle)) {
-                        this.vehicleObject[vehicle['properties']['vehicle']['url']].addTo(this.vehicleLayer);
-                    }
-                }
-                // for(let vehicle in this.vehicleObject) {
-                //     let vehicleFn = `${vehicle}`;
-                //     vehicle = this.vehicleObject[vehicle];
-                //     if(this.vehicleLayer.hasLayer(vehicle) && (!this.mainMap.getBounds().contains(vehicle.getLatLng()) || vehicles.filter(v => v['properties']['vehicle']['url'] === vehicleFn).length === 0)) {
-                //         this.vehicleLayer.removeLayer(vehicle);
-                //         // delete this.vehicleObject[vehicle];
-                //     }
-                // }
             },
             showShortVehicles: async function(vehicles) {
                 for(let vehicle in vehicles) {
@@ -479,6 +454,37 @@
                     //     this.vehicleObject[vehicle['i']].addTo(this.vehicleLayer);
                     // }
                 }
+            },
+            showVehicles: async function(vehicles) {
+                for(let vehicle in vehicles) {
+                    vehicle = vehicles[vehicle];
+                    if(this.vehicleObject[vehicle['id']]) {
+                        this.vehicleObject[vehicle['id']].setIcon(L.divIcon({
+                            html: this.makeVehicleMarkerHTML(vehicle['service']['line_name'], vehicle['heading'], vehicle['vehicle']['livery'], vehicle['vehicle']['css'], vehicle['vehicle']['text_colour']),
+                            iconSize: [42, 42],
+                            iconAnchor: [21, 21],
+                            popupAnchor: [0, 0]
+                        }));
+                        if(this.mainMap.getBounds().contains(this.vehicleObject[vehicle['id']].getLatLng())) {
+                            this.vehicleObject[vehicle['id']].slideTo([vehicle['coordinates'][1], vehicle['coordinates'][0]], {
+                                duration: 700
+                            });
+                        } else {
+                            this.vehicleObject[vehicle['id']].setLatLng([vehicle['coordinates'][1], vehicle['coordinates'][0]]).update();
+                        }
+                    } else {
+                        this.vehicleObject[vehicle['id']] = L.marker([vehicle['coordinates'][1], vehicle['coordinates'][0]], {
+                            icon: L.divIcon({
+                                html: this.makeVehicleMarkerHTML(vehicle['service']['line_name'], vehicle['heading'], vehicle['vehicle']['livery'], vehicle['vehicle']['css'], vehicle['vehicle']['text_colour']),
+                                iconSize: [42, 42],
+                                iconAnchor: [21, 21],
+                                popupAnchor: [0, 0]
+                            }),
+                            draggable: false,
+                            opacity: 1
+                        });
+                    }
+                }
                 for(let vehicle in this.vehicleObject) {
                     let vehicleFn = `${vehicle}`;
                     vehicle = this.vehicleObject[vehicle];
@@ -497,75 +503,19 @@
                 console.log("I am:", vehicle['properties']['vehicle']['url']);
             },
             connectSocket: function() {
-                if (this.socket && this.socket.readyState < 2) { // already CONNECTING or OPEN
-                    return; // no need to reconnect
-                }
-                let url = 'wss://bustimes.org/ws/vehicle_positions';
-                this.socket = new WebSocket(url);
-
-                this.socket.onopen = this.openSocket;
-
-                this.socket.onclose = this.closeSocket;
-
-                this.socket.onerror = function(event) {
-                    console.error(event);
-
-                    this.socketConnected = false;
-                };
-
-                this.socket.onmessage = this.onMessageSocket;
-
-                // this.socket.onmessage = function(event) {
-                //     let data = JSON.parse(event.data);
-                //     this.showShortVehicles(data);
-                //     // if (this.newSocket) {
-                //     //     if (this.vehicleObject) {
-                //     //         this.vehicleLayer.clearLayers();
-                //     //     }
-                //     //     this.vehicleObject = {};
-                //     //     this.vehicleDataObject = {};
-                //     // }
-                //     // this.newSocket = false;
-                //     // for (let i = data.length - 1; i >= 0; i--) {
-                //     //     // console.log(data[i]);
-                //     //     this.vehicleDataObject[data[i].i] = data[i];
-                //     // }
-                //     // this.showShortVehicles(this.vehicleDataObject);
-                // };
+                
             },
             openSocket: function() {
-                this.backoff = 1000;
-                this.newSocket = true;
-
-                this.socketConnected = true;
-
-                // this.sendBoundsSocket();
-                // this.socket.send(JSON.stringify([-7.5600, 49.9600, 1.7800, 60.8400]));
+                
             },
             closeSocket: function(event) {
-                if (event.code > 1000) {  // not 'normal closure'
-                    setTimeout(this.connectSocket(), this.backoff);
-                    this.backoff += 500;
-                }
+                
             },
             onMessageSocket: function(event) {
-                let data = JSON.parse(event.data);
-                this.showShortVehicles(data);
+                
             },
             sendBoundsSocket: function() {
-                this.connectSocket();
                 
-                let bounds = this.mainMap.getBounds();
-                this.socket.send(JSON.stringify([
-                    // bounds.getWest() - 0.2,
-                    // bounds.getSouth() - 0.2,
-                    // bounds.getEast() + 0.2,
-                    // bounds.getNorth() + 0.2
-                    bounds.getWest() * 0.9995,
-                    bounds.getSouth() * 0.9995,
-                    bounds.getEast() * 1.0005,
-                    bounds.getNorth() * 1.0005
-                ]));
             },
             handleLocationRequest: async function() {
                 if(await this.hasLocationPermission()) {
