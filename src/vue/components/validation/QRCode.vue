@@ -36,11 +36,11 @@
         height: 100%;
         max-height: 240px;
         box-shadow:
-            0 0 0 0 hsl(0, 100%, 60%),
-            0 0 0 5px hsl(10, 100%, 70%),
-            0 0 0 10px hsl(20, 100%, 80%),
-            0 0 0 15px hsl(30, 100%, 90%),
-            0 0 0 20px hsl(40, 100%, 100%);
+            0 0 0 0 rgba(255, 51, 51, 1),
+            0 0 0 5px rgba(255, 51, 51, 0.8),
+            0 0 0 10px rgba(255, 51, 51, 0.4),
+            0 0 0 15px rgba(255, 51, 51, 0.3),
+            0 0 0 20px rgba(255, 51, 51, 0);
         margin: 20px;
         animation: rainbowSlide 3s ease-in-out infinite;
     }
