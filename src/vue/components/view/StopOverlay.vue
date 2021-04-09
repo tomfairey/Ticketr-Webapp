@@ -139,6 +139,15 @@
             this.$refs["pull-up"].addEventListener("touchstart", this.handleOverlayTouchStart);
             this.$refs["pull-up"].addEventListener("touchmove", this.handleOverlayTouchMove);
 
+            const unregisterRouterGuard = this.$router.beforeEach((to, from, next) => {
+                this.$emit("close");
+                next(false);
+            });
+
+            this.$once('hook:destroyed', () => {
+                unregisterRouterGuard();
+            });
+
             if(!this.atco) {
                 this.error = true;
             } else {
