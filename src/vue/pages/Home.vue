@@ -152,6 +152,7 @@
                 socket: null,
                 backoff: 1000,
                 newSocket: null,
+                socketConnected: false,
                 vehicleId: null,
                 stopAtco: null
             }
@@ -196,8 +197,18 @@
                         //     await this.showVehicles(vehicleData);
                         //     this.lastVehicleFetchTime = Math.floor(Date.now() / 1000);
                         // }
-                        this.sendBoundsSocket();
+
+                        // HTTP (REST) API CALL HERE
+                        
                     // }
+
+                    if(this.socketConnected) {
+                        try {
+                            this.sendBoundsSocket();
+                        } catch(e) {
+                            console.warn("Vehicle position fetch error", e);
+                        }
+                    }
 
                     if(centerGeohash !== this.lastGeohash) {
                         // geohashes['c'] = centerGeohash;
@@ -221,12 +232,16 @@
 
                         // this.stopsLayer.clearLayers();
 
-                        if(!this.stopsResponseObject.hasOwnProperty(centerGeohash)){
-                            let geohashData = await this.fetchStopData(centerGeohash);
-                            if(geohashData) {
-                                this.stopsResponseObject[centerGeohash] = geohashData;
-                                await this.showStops(geohashData);
+                        try {
+                            if(!this.stopsResponseObject.hasOwnProperty(centerGeohash)){
+                                let geohashData = await this.fetchStopData(centerGeohash);
+                                if(geohashData) {
+                                    this.stopsResponseObject[centerGeohash] = geohashData;
+                                    await this.showStops(geohashData);
+                                }
                             }
+                        } catch(e) {
+                            console.warn("Stop position fetch error", e);
                         }
                         //  else {
                         //     await this.showStops(this.stopsResponseObject[centerGeohash]);
@@ -494,6 +509,8 @@
 
                 this.socket.onerror = function(event) {
                     console.error(event);
+
+                    this.socketConnected = false;
                 };
 
                 this.socket.onmessage = this.onMessageSocket;
@@ -520,12 +537,14 @@
                 this.backoff = 1000;
                 this.newSocket = true;
 
+                this.socketConnected = true;
+
                 // this.sendBoundsSocket();
                 // this.socket.send(JSON.stringify([-7.5600, 49.9600, 1.7800, 60.8400]));
             },
             closeSocket: function(event) {
                 if (event.code > 1000) {  // not 'normal closure'
-                    setTimeout(connect, this.backoff);
+                    setTimeout(this.connectSocket(), this.backoff);
                     this.backoff += 500;
                 }
             },
