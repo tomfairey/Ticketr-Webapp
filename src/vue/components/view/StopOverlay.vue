@@ -64,7 +64,7 @@
             generateTimeString(timeString) {
                 let date = new Date(Date.parse(timeString));
 
-                return `${("00" + date.getUTCHours()).substr(-2, 2)}:${("00" + date.getUTCMinutes()).substr(-2, 2)}`;
+                return `${("00" + date.getHours()).substr(-2, 2)}:${("00" + date.getMinutes()).substr(-2, 2)}`;
             },
             longestName(name, shortName) {
                 if(!name) return shortName;
