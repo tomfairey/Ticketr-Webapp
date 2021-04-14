@@ -91,7 +91,7 @@
             isDarkMode: function() {
                 let isDark = false;
 
-                isDark = this.darkMode();
+                // isDark = this.darkMode();
 
                 return isDark;
             },
